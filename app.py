@@ -5,7 +5,9 @@ from tkinterdnd2 import TkinterDnD, DND_FILES
 from tkinter import ttk
 from PIL import Image
 from collections import Counter
+import requests
 import os
+import sys
 
 
 class ImageProcessorApp:
@@ -214,7 +216,48 @@ class ImageProcessorApp:
         image.save(output_path, "PNG")
 
 
+def check_for_updates(current_version="1.0"):
+    """检查版本更新"""
+    try:
+        url = "https://your-github-pages-url/version.json"  # 替换为你的 version.json 地址
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        latest_version = data["version"]
+        download_url = data["url"]
+
+        if latest_version > current_version:
+            if messagebox.askyesno("更新提示", f"发现新版本 {latest_version}，是否立即下载更新？"):
+                download_and_replace(download_url)
+    except Exception as e:
+        messagebox.showerror("更新检查失败", f"无法检查更新：{e}")
+
+
+def download_and_replace(url):
+    """下载并替换当前版本"""
+    try:
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+
+        new_file = "app-new.exe"
+        with open(new_file, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        current_file = sys.argv[0]
+        os.rename(current_file, current_file + ".bak")
+        os.rename(new_file, current_file)
+        messagebox.showinfo("更新成功", "新版本已安装，请重新启动应用。")
+        sys.exit()
+    except Exception as e:
+        messagebox.showerror("更新失败", f"下载更新失败：{e}")
+
+
 if __name__ == "__main__":
+    # 检查更新
+    check_for_updates(current_version="1.0")
+
     root = TkinterDnD.Tk()
     app = ImageProcessorApp(root)
     root.mainloop()
