@@ -1,0 +1,4 @@
+# 忽略 PyInstaller 生成的文件
+build/
+dist/
+*.spec
